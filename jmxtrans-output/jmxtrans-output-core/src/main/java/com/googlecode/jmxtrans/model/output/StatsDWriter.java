@@ -53,6 +53,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.googlecode.jmxtrans.util.NumberUtils.isNumeric;
 
 /**
  * This output writer sends data to a host/port combination in the StatsD
@@ -174,23 +175,20 @@ public class StatsDWriter extends BaseOutputWriter {
 			Map<String, Object> resultValues = result.getValues();
 			if (resultValues != null) {
 				for (Entry<String, Object> values : resultValues.entrySet()) {
-					String line = null;
+					if (!isNumeric(values.getValue()) && !!stringsValuesAsKey) break;
 
-					if (NumberUtils.isNumeric(values.getValue())) {
-						line = KeyUtils.getKeyString(server, query, result, values, typeNames, rootPrefix)
-								+ ":" + values.getValue().toString() + "|" + bucketType + "\n";
-					} else if (stringsValuesAsKey) {
-						line = KeyUtils.getKeyString(server, query, result, values, typeNames, rootPrefix)
-								+ "." + values.getValue().toString() + ":" + stringValueDefaultCount.toString()
-								+ "|" + bucketType + "\n";
-					}
+					String line = KeyUtils.getKeyString(server, query, result, values, typeNames, rootPrefix)
+								+ ":" + computeActualValue(values) + "|" + bucketType + "\n";
 
-					if (StringUtils.isNotBlank(line)) {
-						doSend(line.trim());
-					}
+					doSend(line.trim());
 				}
 			}
 		}
+	}
+
+	private String computeActualValue(Entry<String, Object> values) {
+		if (isNumeric(values.getValue())) return values.getValue().toString();
+		return stringValueDefaultCount.toString();
 	}
 
 	private synchronized boolean doSend(String stat) {
