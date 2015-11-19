@@ -40,6 +40,7 @@ import org.apache.commons.pool.impl.GenericKeyedObjectPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.management.MBeanServer;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
@@ -71,8 +72,8 @@ public class StatsDWriter extends BaseOutputWriter {
 	private final String rootPrefix;
 	private final InetSocketAddress address;
 	private final DatagramChannel channel;
-	private final Boolean stringsValuesAsKey;
-	private final Long stringValueDefaultCount;
+	private final boolean stringsValuesAsKey;
+	@Nonnull private final Long stringValueDefaultCount;
 
 	private static final String BUCKET_TYPE = "bucketType";
 	private static final String STRING_VALUE_AS_KEY = "stringValuesAsKey";
@@ -193,9 +194,7 @@ public class StatsDWriter extends BaseOutputWriter {
 
 	private synchronized boolean doSend(String stat) {
 		try {
-			if (isDebugEnabled()) {
-				log.debug("StatsD Message: " + stat);
-			}
+			log.debug("StatsD Message: {}", stat);
 
 			final byte[] data = stat.getBytes("utf-8");
 
